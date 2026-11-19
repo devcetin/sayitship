@@ -4,9 +4,9 @@
 
 Press the iPhone Action Button, speak a task and put the phone back in your pocket. The task runs in the background on your own computer or server with Claude Code, and you get a one-line result as a notification. You never open an app.
 
-> 🚧 Work in progress. The first version is being built.
+> 🚧 Work in progress. v0.1 works end to end; the router is next.
 
-## How it works (planned v0.1)
+## How it works (v0.1)
 
 ```
 Action Button → Shortcut (dictate) → your server (over Tailscale) → claude -p → ntfy notification
@@ -52,7 +52,7 @@ By default the task runs with `--permission-mode acceptEdits --allowedTools Read
 
 ## Roadmap
 
-- [ ] v0.1: voice → background task → notification
+- [x] v0.1: voice → background task → notification
 - [ ] Router: answer quick questions directly, and send a task to the right existing project session
 - [ ] Context: attach your clipboard, latest screenshot or a shared link
 - [ ] Approvals: Yes/No buttons before risky actions
