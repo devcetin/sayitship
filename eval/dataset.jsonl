@@ -1,0 +1,80 @@
+{"id": "a01", "text": "HTTP 404 ne demek", "expected": {"route": "answer"}}
+{"id": "a02", "text": "Python'da liste ile tuple arasındaki fark ne", "expected": {"route": "answer"}}
+{"id": "a03", "text": "what is the difference between git merge and git rebase", "expected": {"route": "answer"}}
+{"id": "a04", "text": "REST ile GraphQL arasındaki temel fark nedir kısaca", "expected": {"route": "answer"}}
+{"id": "a05", "text": "Big O notasyonunda O(n log n) ne anlama geliyor", "expected": {"route": "answer"}}
+{"id": "a06", "text": "what does the CAP theorem say", "expected": {"route": "answer"}}
+{"id": "a07", "text": "Docker image ile container farkı ne", "expected": {"route": "answer"}}
+{"id": "a08", "text": "overfitting nedir tek cümleyle anlat", "expected": {"route": "answer"}}
+{"id": "a09", "text": "what is a transformer in machine learning, briefly", "expected": {"route": "answer"}}
+{"id": "a10", "text": "JavaScript'te let ile const farkı ne", "expected": {"route": "answer"}}
+{"id": "a11", "text": "SQL'de inner join ile left join farkı nedir", "expected": {"route": "answer"}}
+{"id": "a12", "text": "what port does HTTPS use by default", "expected": {"route": "answer"}}
+{"id": "a13", "text": "Flutter'da StatelessWidget ile StatefulWidget farkı ne", "expected": {"route": "answer"}}
+{"id": "a14", "text": "gradient descent'te learning rate çok büyük olursa ne olur", "expected": {"route": "answer"}}
+{"id": "a15", "text": "what is the time complexity of binary search", "expected": {"route": "answer"}}
+{"id": "a16", "text": "dropout katmanı ne işe yarar", "expected": {"route": "answer"}}
+{"id": "a17", "text": "what does idempotent mean for an HTTP method", "expected": {"route": "answer"}}
+{"id": "a18", "text": "JWT nedir kısaca", "expected": {"route": "answer"}}
+{"id": "t01", "text": "bugün İstanbul'da hava nasıl", "expected": {"route": "task", "project": "sandbox", "session": "new"}}
+{"id": "t02", "text": "what's the latest version of FastAPI right now", "expected": {"route": "task", "project": "sandbox", "session": "new"}}
+{"id": "t03", "text": "dolar kuru şu an kaç", "expected": {"route": "task", "project": "sandbox", "session": "new"}}
+{"id": "t04", "text": "market listesi oluştur süt ekmek yumurta peynir", "expected": {"route": "task", "project": "sandbox", "session": "new"}}
+{"id": "t05", "text": "notlar dosyasına yarın saat onda toplantı var diye yaz", "expected": {"route": "task", "project": "sandbox", "session": "new"}}
+{"id": "t06", "text": "write a small python script that renames all jpg files by date", "expected": {"route": "task", "project": "sandbox", "session": "new"}}
+{"id": "t07", "text": "bir tane fizzbuzz yaz dene bakalım", "expected": {"route": "task", "project": "sandbox", "session": "new"}}
+{"id": "t08", "text": "summarize the latest news about AI regulation in the EU", "expected": {"route": "task", "project": "sandbox", "session": "new"}}
+{"id": "t09", "text": "blog'a yeni bir yazı taslağı aç başlığı ilk projem olsun", "expected": {"route": "task", "project": "blog", "session": "new"}}
+{"id": "t10", "text": "add an RSS feed to my blog", "expected": {"route": "task", "project": "blog", "session": "new"}}
+{"id": "t11", "text": "Astro sitesinin build hatasını çöz", "expected": {"route": "task", "project": "blog", "session": "new"}}
+{"id": "t12", "text": "bir de footer'ın rengini de koyu yap", "expected": {"route": "task", "project": "blog", "session": "continue"}}
+{"id": "t13", "text": "az önce eklediğin dark mode düğmesini sağa al", "expected": {"route": "task", "project": "blog", "session": "continue"}}
+{"id": "t14", "text": "the toggle you just added, make it remember the choice in local storage", "expected": {"route": "task", "project": "blog", "session": "continue"}}
+{"id": "t15", "text": "onu geri al dark mode hiç olmasın", "expected": {"route": "task", "project": "blog", "session": "continue"}}
+{"id": "t16", "text": "netlify ayarlarına bak deploy neden düşüyor blogda", "expected": {"route": "task", "project": "blog", "session": "new"}}
+{"id": "t17", "text": "harcama uygulamasına kategori bazlı grafik ekle", "expected": {"route": "task", "project": "budget-app", "session": "new"}}
+{"id": "t18", "text": "add a monthly budget limit screen to the flutter app", "expected": {"route": "task", "project": "budget-app", "session": "new"}}
+{"id": "t19", "text": "Firestore kurallarını kontrol et herkes herkesin verisini okuyabiliyor mu", "expected": {"route": "task", "project": "budget-app", "session": "new"}}
+{"id": "t20", "text": "bütçe uygulamasında dark theme desteği ekle", "expected": {"route": "task", "project": "budget-app", "session": "new"}}
+{"id": "t21", "text": "giriş ekranı için yaptığın düzeltmeye bir de test yaz", "expected": {"route": "task", "project": "budget-app", "session": "continue"}}
+{"id": "t22", "text": "the login crash fix you made, also handle the case where there is no internet", "expected": {"route": "task", "project": "budget-app", "session": "continue"}}
+{"id": "t23", "text": "harcamaları csv olarak dışa aktarma özelliği ekle", "expected": {"route": "task", "project": "budget-app", "session": "new"}}
+{"id": "t24", "text": "CNN notebook'una batch normalization ekleyip tekrar dene", "expected": {"route": "task", "project": "ml-notes", "session": "continue"}}
+{"id": "t25", "text": "şimdi de 10 epoch ile eğit ve sonuçları karşılaştır", "expected": {"route": "task", "project": "ml-notes", "session": "continue"}}
+{"id": "t26", "text": "also save the trained model weights to disk", "expected": {"route": "task", "project": "ml-notes", "session": "continue"}}
+{"id": "t27", "text": "yeni bir notebook aç MNIST üzerinde basit bir MLP eğit", "expected": {"route": "task", "project": "ml-notes", "session": "new"}}
+{"id": "t28", "text": "create a notebook that compares SGD and Adam on a toy dataset", "expected": {"route": "task", "project": "ml-notes", "session": "new"}}
+{"id": "t29", "text": "loss grafiğinin eksen başlıklarını Türkçe yap", "expected": {"route": "task", "project": "ml-notes", "session": "continue"}}
+{"id": "t30", "text": "sayitship'te router'ın loglarına model adını da ekle", "expected": {"route": "task", "project": "sayitship", "session": "new"}}
+{"id": "t31", "text": "add a health check that also verifies the claude command exists, in the voice server", "expected": {"route": "task", "project": "sayitship", "session": "new"}}
+{"id": "t32", "text": "ses sunucusunun README'sine kurulum videosu için yer aç", "expected": {"route": "task", "project": "sayitship", "session": "new"}}
+{"id": "t33", "text": "FastAPI sunucusunun testlerini çalıştır ve kırılan var mı söyle", "expected": {"route": "task", "project": "sayitship", "session": "new"}}
+{"id": "t34", "text": "ntfy bildirimlerine öncelik seviyesi ekle", "expected": {"route": "task", "project": "sayitship", "session": "new"}}
+{"id": "t35", "text": "the approval timeout should be configurable per project in sayitship", "expected": {"route": "task", "project": "sayitship", "session": "new"}}
+{"id": "c01", "text": "panodaki hatayı düzelt", "clipboard": "Error: Cannot find module '@astrojs/tailwind' imported from astro.config.mjs", "expected": {"route": "task", "project": "blog", "session": "new"}}
+{"id": "c02", "text": "fix this", "clipboard": "FirebaseException: [cloud_firestore/permission-denied] Missing or insufficient permissions. lib/screens/expenses.dart:42", "expected": {"route": "task", "project": "budget-app", "session": "new"}}
+{"id": "c03", "text": "bu hata ne demek ve düzelt", "clipboard": "RuntimeError: mat1 and mat2 shapes cannot be multiplied (64x1024 and 512x10)", "expected": {"route": "task", "project": "ml-notes", "session": "continue"}}
+{"id": "c04", "text": "bu linkteki makaleyi özetle notlarıma kaydet", "url": "https://example.com/2026/attention-is-still-all-you-need", "expected": {"route": "task", "project": "sandbox", "session": "new"}}
+{"id": "c05", "text": "use this library for the retry logic", "url": "https://pypi.org/project/tenacity/", "clipboard": "", "expected": {"route": "task", "project": "sayitship", "session": "new"}}
+{"id": "c06", "text": "panodaki metni İngilizceye çevirip bir dosyaya kaydet", "clipboard": "Yarınki sunum için slaytları hazırla ve bütçe tablosunu güncelle.", "expected": {"route": "task", "project": "sandbox", "session": "new"}}
+{"id": "c07", "text": "ekran görüntüsündeki tasarımı blog ana sayfasına uygula", "image": true, "expected": {"route": "task", "project": "blog", "session": "new"}}
+{"id": "c08", "text": "what does this error mean", "clipboard": "TypeError: Cannot read properties of undefined (reading 'map')", "expected": {"route": "answer"}}
+{"id": "c09", "text": "panodaki kelime ne anlama geliyor", "clipboard": "idempotency", "expected": {"route": "answer"}}
+{"id": "e01", "text": "README'yi güncelle", "expected": {"route": "task", "project": "sandbox", "session": "new"}}
+{"id": "e02", "text": "testleri çalıştır", "expected": {"route": "task", "project": "sandbox", "session": "new"}}
+{"id": "e03", "text": "bir de başlığı büyüt", "expected": {"route": "task", "project": "blog", "session": "continue"}}
+{"id": "e04", "text": "commit at ve pushla blog değişikliklerini", "expected": {"route": "task", "project": "blog", "session": "continue"}}
+{"id": "e05", "text": "bugünün tarihi ne", "expected": {"route": "task", "project": "sandbox", "session": "new"}}
+{"id": "e06", "text": "PyTorch'ta model.eval() ne işe yarar", "expected": {"route": "answer"}}
+{"id": "e07", "text": "PyTorch notebook'unda model.eval() çağrısını unuttum mu kontrol et", "expected": {"route": "task", "project": "ml-notes", "session": "new"}}
+{"id": "e08", "text": "Flutter'da setState nasıl çalışır", "expected": {"route": "answer"}}
+{"id": "e09", "text": "harcama uygulamasında setState yerine provider kullanmaya geç", "expected": {"route": "task", "project": "budget-app", "session": "new"}}
+{"id": "e10", "text": "Astro nedir", "expected": {"route": "answer"}}
+{"id": "e11", "text": "hatırlat bana yarın sabah doktora gideceğim", "expected": {"route": "task", "project": "sandbox", "session": "new"}}
+{"id": "e12", "text": "bu projede kaç tane test var say", "expected": {"route": "task", "project": "sandbox", "session": "new"}}
+{"id": "e13", "text": "son yaptığın değişikliği geri al", "expected": {"route": "task", "project": "blog", "session": "continue"}}
+{"id": "e14", "text": "tamam güzel olmuş şimdi mobilde de düzgün görünsün", "expected": {"route": "task", "project": "blog", "session": "continue"}}
+{"id": "e15", "text": "github actions ile otomatik test kur ses sunucusu için", "expected": {"route": "task", "project": "sayitship", "session": "new"}}
+{"id": "e16", "text": "how do I center a div", "expected": {"route": "answer"}}
+{"id": "e17", "text": "1 GB kaç MB", "expected": {"route": "answer"}}
+{"id": "e18", "text": "write a haiku about debugging into a file", "expected": {"route": "task", "project": "sandbox", "session": "new"}}

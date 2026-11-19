@@ -1,0 +1,12 @@
+[
+  {
+    "name": "sandbox",
+    "path": "C:/code/sayitship-sandbox",
+    "description": "Scratch folder for quick experiments, notes and throwaway files. Default."
+  },
+  {
+    "name": "my-app",
+    "path": "C:/code/my-app",
+    "description": "Example: a Flutter budget app. Mention the stack and what the project is about."
+  }
+]

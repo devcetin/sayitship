@@ -2,69 +2,120 @@
 
 **Press one button. Say it. Your coding agent ships it.**
 
-Press the iPhone Action Button, speak a task and put the phone back in your pocket. The task runs in the background on your own computer or server with Claude Code, and you get a one-line result as a notification. You never open an app.
+Press the iPhone Action Button, speak a request and put the phone back in your pocket.
+A small router decides what to do with it: answer a quick question on the spot, or hand the
+work to Claude Code in the right project, continuing the last session when you are clearly
+following up. You get the result as a notification. Risky commands ask your phone first.
+You never open an app.
 
-> 🚧 Work in progress. v0.1 works end to end; the router is next.
+sayitship is not another remote-control app for coding agents. It is a voice entry layer
+that sits in front of the tools you already use: iOS Shortcuts, Tailscale, Claude Code and ntfy.
 
-## How it works (v0.1)
+## How it works
 
 ```
-Action Button → Shortcut (dictate) → your server (over Tailscale) → claude -p → ntfy notification
+ iPhone                                   your PC (reachable only over Tailscale)
+┌─────────────────────┐   POST /task    ┌──────────────────────────────────────────────┐
+│ Action Button       │ ──────────────▶ │ FastAPI  → 202 Accepted right away            │
+│ Shortcut: dictate   │   Bearer token  │    │                                         │
+│ (+ clipboard,       │                 │    ▼  background                             │
+│    screenshot, link)│                 │ Router (Gemini Flash-Lite, ~1.5–4 s)          │
+└─────────────────────┘                 │    ├─ answer ─────────────▶ ntfy: ⚡ answer    │
+          ▲                             │    └─ task: project + new/continue           │
+          │ notification                │          ▼                                   │
+          │ (Yes/No buttons for         │    claude -p  (in that project's folder,     │
+          │  risky commands)            │               --resume last session)         │
+┌─────────┴───────────┐                 │          │  Bash call? → hook → phone Yes/No │
+│ ntfy app            │ ◀────────────── │          ▼                                   │
+└─────────────────────┘                 │    one-sentence summary → ntfy: 🛠 project    │
+                                        └──────────────────────────────────────────────┘
 ```
 
-1. The Shortcut turns your voice into text, sends it to your server and returns right away.
-2. The server runs the task in the background with Claude Code.
-3. When it finishes, you get a one-sentence summary on your phone through ntfy.
+> A plain-language walkthrough of the code is coming in the owner's own words.
+
+## Router eval
+
+The router is the part that can be wrong, so it is measured. `eval/dataset.jsonl` is a public
+test set of spoken requests in Turkish and English, each with the right route, project and
+session, against a fixed set of five example projects (`eval/projects.json`).
+
+```powershell
+python -m sayitship.evaluate --models gemini-3.5-flash-lite,gemini-flash-lite-latest
+```
+
+Latest results: [eval/results.md](eval/results.md).
 
 ## Quick start (Windows)
 
-You need Python 3.12+, [Claude Code](https://claude.com/claude-code) signed in (`claude` on your PATH), [Tailscale](https://tailscale.com) on your PC and iPhone, and the [ntfy](https://ntfy.sh) app on your iPhone.
+You need Python 3.12+, [Claude Code](https://claude.com/claude-code) signed in (`claude` on your
+PATH), [Tailscale](https://tailscale.com) on your PC and iPhone, the [ntfy](https://ntfy.sh) app
+on your iPhone and, for the router, a [Gemini API key](https://aistudio.google.com/apikey).
 
 ```powershell
 py -3.12 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-copy .env.example .env   # then fill in your own values
+copy .env.example .env                    # token, ntfy topic, Tailscale IP
+copy projects.example.json projects.json  # your project folders, with one-line descriptions
 python -m sayitship
 ```
 
-Send a test task from the PC:
+Set `GEMINI_API_KEY` in `.env` or as a user environment variable. Without it, every request
+runs as a new task in the first project.
+
+Then build the Shortcuts: [docs/shortcut.md](docs/shortcut.md).
+
+To start the server automatically when you log in:
 
 ```powershell
-$h = @{ Authorization = "Bearer <your-token>" }
-Invoke-RestMethod -Method Post -Uri http://<tailscale-ip>:8787/task -Headers $h -ContentType "application/json; charset=utf-8" -Body '{"text":"Create hello.txt that says hi"}'
+.\scripts\install-autostart.ps1
 ```
 
-You get `202 Accepted` right away and an ntfy notification when the task finishes.
+## API
 
-### API
+| method | path | auth | what it does |
+|---|---|---|---|
+| `POST` | `/task` | token | queue a request; returns `202` and an id |
+| `GET` | `/tasks` | token | recent requests with the router's decision and the result |
+| `GET` | `/tasks/{id}` | token | one request |
+| `POST` | `/approvals/{id}/allow\|deny?key=…` | one-time key | pressed from the notification |
+| `GET` | `/health` | none | liveness |
 
-`POST /task` with header `Authorization: Bearer <token>` and JSON body:
+`POST /task` body: `text` (required), `clipboard`, `url`, `image` (base64), `project`.
 
-| field | required | meaning |
-|---|---|---|
-| `text` | yes | the task, in plain words |
-| `workdir` | no | a name from `WORKDIRS` (never a raw path); default is the first one |
+## Security
 
-### What Claude Code may do
+Your voice can run code on your computer, so the defaults are strict:
 
-By default the task runs with `--permission-mode acceptEdits --allowedTools Read Edit Write Glob Grep`: it can read and edit files inside the chosen workdir, but it cannot run shell commands. Change `CLAUDE_ARGS` in `.env` only if you understand what you allow.
+- **Private network only.** The server listens on your Tailscale address, not on the internet.
+- **Token on every request.** Compared in constant time.
+- **Project allowlist.** Claude Code runs only in folders listed in `projects.json`; a request
+  can name a project, never a path.
+- **Approval for commands.** Claude may read, edit, search the web and run read-only commands
+  (`git status`, `ls`, …) on its own. Any other shell command goes through a hook that sends you a
+  Yes/No notification and waits. No answer in 5 minutes means No. If the approval system fails,
+  the answer is No.
+- **No secrets in notifications.** Yes/No buttons carry a one-time key for that one question,
+  stored only as a hash, valid once and only for a few minutes. The main token never goes to ntfy.
+- **Secrets stay out of the agent.** The Claude process does not inherit the server token, the
+  ntfy topic or the Gemini key.
+- **Know the limits.** `acceptEdits` lets Claude change files inside the project without asking.
+  Use git, and keep projects you can't afford to break out of `projects.json`.
 
 ## Roadmap
 
 - [x] v0.1: voice → background task → notification
-- [ ] Router: answer quick questions directly, and send a task to the right existing project session
-- [ ] Context: attach your clipboard, latest screenshot or a shared link
-- [ ] Approvals: Yes/No buttons before risky actions
-- [ ] Router eval: a public test set with accuracy, latency and cost
+- [x] Router: answer quick questions directly, pick the project, continue or start a session
+- [x] Context: attach your clipboard, latest screenshot or a shared link
+- [x] Approvals: Yes/No buttons before risky commands
+- [x] Router eval: a public test set with accuracy, latency and cost
+- [ ] Demo video
 
-## Security
+## Development
 
-Your phone's voice can run code on your computer, so security comes first:
-- The server is reachable only over your private Tailscale network, never the open internet.
-- Every request needs a secret token.
-- Claude Code works only inside folders you list in `WORKDIRS`, and by default it cannot run shell commands.
-- Risky actions will require your approval.
+```powershell
+python -m pytest
+```
 
 ## License
 

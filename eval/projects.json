@@ -1,0 +1,15 @@
+{
+  "projects": [
+    {"name": "sandbox", "description": "Scratch folder for quick experiments, notes, lists and throwaway files. Default."},
+    {"name": "sayitship", "description": "Python FastAPI server that turns iPhone voice requests into Claude Code tasks; router, approvals, ntfy notifications."},
+    {"name": "blog", "description": "Personal blog built with Astro and Tailwind; posts in Markdown, deployed on Netlify."},
+    {"name": "budget-app", "description": "Flutter mobile app for tracking monthly spending, Firebase auth and Firestore."},
+    {"name": "ml-notes", "description": "Jupyter notebooks for a machine learning course: PyTorch, CNNs, CIFAR-10 experiments."}
+  ],
+  "history": {
+    "blog": {"last_text": "header'a dark mode düğmesi ekle", "minutes_ago": 4},
+    "ml-notes": {"last_text": "train the CNN on CIFAR-10 for 5 epochs and plot the loss", "minutes_ago": 20},
+    "budget-app": {"last_text": "giriş ekranındaki çökmeyi düzelt", "minutes_ago": 180},
+    "sayitship": {"last_text": "add retries to the ntfy client", "minutes_ago": 2880}
+  }
+}

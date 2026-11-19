@@ -1,0 +1,4 @@
+{
+  "_source": "USD per 1M tokens, Standard tier, https://ai.google.dev/gemini-api/docs/pricing (checked 2026-11-19). Output includes thinking tokens.",
+  "gemini-3.5-flash-lite": {"input": 0.30, "output": 2.50}
+}
