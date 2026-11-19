@@ -31,7 +31,61 @@ that sits in front of the tools you already use: iOS Shortcuts, Tailscale, Claud
                                         └──────────────────────────────────────────────┘
 ```
 
-> A plain-language walkthrough of the code is coming in the owner's own words.
+### Walkthrough: one request, file by file
+
+**1. The door: [`main.py`](sayitship/main.py).** The Shortcut posts to `/task` with a Bearer
+token. FastAPI checks the token first (`check_token`, compared with `secrets.compare_digest` so
+response time leaks nothing), then validates the body: text or an audio recording, optional
+clipboard, link and screenshot, and at most a project *name*. A client can never send a folder
+path. The request gets an id, is written to SQLite as `queued`, handed to a background task, and
+the phone gets `202 Accepted` at once. That last part is the key design choice: a Claude Code
+run can take minutes, and an iOS Shortcut cannot wait that long, so the flow is asynchronous and
+the result comes back later as a notification.
+
+**2. The decision: [`router.py`](sayitship/router.py).** One call to Gemini Flash-Lite, with a
+JSON schema so the answer is always machine-readable, decides everything at once:
+
+- `request`: what you meant. For audio, the transcript (your project names are in the prompt, so
+  they come out spelled right). For dictated text, a repaired version ("pay torç notbuk" →
+  "PyTorch notebook").
+- `route`: `answer` for a general question the model can answer itself, `task` for anything that
+  needs files, commands or live data.
+- `project` and `session`: which folder, and whether to continue the last Claude session there
+  (project active in the last 30 minutes, or you point at the last task) or start fresh.
+
+Every value is validated (`parse_decision`): an unknown project becomes the default, an empty
+answer becomes a task. If a model fails it tries the next one in `ROUTER_MODELS`; if all fail, a
+text request still runs as a new task in the default project, so a flaky API never loses work.
+
+**3. The work: [`runner.py`](sayitship/runner.py).** An `answer` goes straight to ntfy and Claude
+never starts. A `task` takes that project's lock (one run per project at a time; a second request
+waits its turn), then starts `claude -p` in the project folder with:
+
+- the request on stdin (no shell quoting problems with Turkish letters),
+- `--resume <session id>` when continuing,
+- a generated settings file holding the approval hook and permission rules,
+- an environment without the server's secrets.
+
+Claude's JSON output gives the session id (saved for next time) and the reply. Claude is asked to
+end with one plain paragraph that answers the question or says what it did, and that paragraph
+becomes the notification.
+
+**4. The guard: [`hook.py`](sayitship/hook.py).** Claude Code calls this script before every shell
+command. Shell access is not in Claude's allowed tools, so only this hook can grant it.
+Read-only commands (`git status`, `ls`, …) pass. Anything else (chaining, redirection, flags
+that run programs or write files, anything touching sayitship's own files) goes to the server,
+which sends a Yes/No notification. The hook waits for your tap. Any error, timeout or crash ends
+in "deny".
+
+**5. The helpers.**
+
+- [`notify.py`](sayitship/notify.py) publishes to ntfy as JSON, because HTTP headers cannot carry
+  Turkish letters.
+- [`db.py`](sayitship/db.py) is the SQLite task history, the approvals and the last session per
+  project.
+- [`config.py`](sayitship/config.py) reads `.env` and `projects.json` and refuses to start on bad
+  values.
+- [`evaluate.py`](sayitship/evaluate.py) runs the router on the public test sets.
 
 ## Router eval
 
