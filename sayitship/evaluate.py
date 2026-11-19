@@ -149,6 +149,9 @@ def write_report(summaries: list[dict], path: Path, cases: int) -> None:
         "- **project / session**: scored only on cases where the right answer is a task.",
         "- **noisy dictation**: exact score on the `n*` cases, where speech-to-text mangled technical words.",
         "- Latency is measured from this PC, including network; errors are excluded from latency and cost.",
+        "- p95 includes waiting out the API's `503 overloaded` replies (retried after 10 s, 20 s, 30 s);",
+        "  p50 is closer to a normal call. In real use the server tries the next model instead of waiting.",
+        "- A model with errors could not be scored on those cases (the API kept answering 503).",
         "- Cost uses token counts reported by the API and prices in `eval/prices.json`.",
     ]
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
@@ -160,7 +163,21 @@ def main() -> None:
     parser.add_argument("--models", default=os.environ.get("ROUTER_MODELS", "gemini-3.5-flash-lite"))
     parser.add_argument("--delay", type=float, default=4.0, help="seconds between calls (free tier limits)")
     parser.add_argument("--limit", type=int, default=0, help="only the first N cases")
+    parser.add_argument("--report", action="store_true", help="rebuild results.md from saved results")
     args = parser.parse_args()
+    models = [m.strip() for m in args.models.split(",") if m.strip()]
+    prices_file = EVAL_DIR / "prices.json"
+    prices = json.loads(prices_file.read_text(encoding="utf-8")) if prices_file.exists() else {}
+
+    if args.report:
+        summaries, cases = [], 0
+        for model in models:
+            rows = load_cases(EVAL_DIR / "results" / f"{model}.jsonl")
+            cases = len(rows)
+            summaries.append(summarize(model, rows, prices))
+        write_report(summaries, EVAL_DIR / "results.md", cases)
+        print(f"wrote {EVAL_DIR / 'results.md'}")
+        return
 
     api_key = user_env("GEMINI_API_KEY")
     if not api_key:
@@ -169,13 +186,11 @@ def main() -> None:
     if args.limit:
         cases = cases[: args.limit]
     projects, history = load_fixture(EVAL_DIR / "projects.json")
-    prices_file = EVAL_DIR / "prices.json"
-    prices = json.loads(prices_file.read_text(encoding="utf-8")) if prices_file.exists() else {}
 
     out_dir = EVAL_DIR / "results"
     out_dir.mkdir(exist_ok=True)
     summaries = []
-    for model in [m.strip() for m in args.models.split(",") if m.strip()]:
+    for model in models:
         rows = run_model(model, cases, projects, history, api_key, args.delay)
         with (out_dir / f"{model}.jsonl").open("w", encoding="utf-8") as f:
             for row in rows:

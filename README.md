@@ -43,7 +43,23 @@ session, against a fixed set of five example projects (`eval/projects.json`).
 python -m sayitship.evaluate --models gemini-3.5-flash-lite,gemini-flash-lite-latest
 ```
 
-Latest results: [eval/results.md](eval/results.md).
+Latest run, 90 cases ([full report](eval/results.md), per-case output in `eval/results/`):
+
+| model | exact | route | project | session | noisy dictation | p50 | cost / 1000 requests |
+|---|---|---|---|---|---|---|---|
+| gemini-3.5-flash-lite | **97%** | 100% | 97% | 98% | 100% | 2.6 s | $0.44 |
+| gemini-flash-lite-latest | 94% | 99% | 97% | 97% | 100% | 1.6 s | – |
+
+What the numbers taught me:
+
+- **Unclear rules looked like model errors.** A first run scored 80% on sessions. Most "mistakes"
+  were cases where my own labels were inconsistent, so I wrote an explicit rule (continue if the
+  project was active in the last 30 minutes, or the request points at the last task; a spoken
+  "fresh start" always wins), relabeled the set and put the rule in the prompt.
+- **Dictation repair works on text.** "pay torç notbukuna batç normalizasyon ekle" becomes
+  "PyTorch notebook'una batch normalization ekle"; all 10 noisy cases were routed correctly.
+- **The free API is often overloaded.** Many calls got `503`, so the server tries the next model
+  in `ROUTER_MODELS` and, if all fail, falls back to running the request as a new task.
 
 ## Quick start (Windows)
 
