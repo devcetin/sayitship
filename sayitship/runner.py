@@ -3,6 +3,7 @@
 import json
 import logging
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -12,17 +13,19 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from . import router
-from .config import Project, Settings
+from .config import REPO_ROOT, Project, Settings
 from .db import Store
 from .notify import send_notification
 
 log = logging.getLogger("sayitship")
 
 SUMMARY_HINT = (
-    "\n\nWhen you are done, end your reply with one short plain sentence "
-    "that summarizes what you did. Write it in the same language as the request."
+    "\n\nThe user will only see the last paragraph of your reply, as a phone notification. "
+    "So end with one short plain-text paragraph (no Markdown, at most 3 sentences) in the "
+    "language of the request: if the request asked for information, give the answer itself "
+    "with the key facts and numbers; otherwise say what you did."
 )
-MAX_SUMMARY = 300
+MAX_SUMMARY = 600
 HOOK_SCRIPT = Path(__file__).with_name("hook.py")
 # Variables the child must not see: our own secrets and leftovers from a parent Claude session.
 HIDDEN_ENV = ("SAYITSHIP_TOKEN", "NTFY_TOPIC", "GEMINI_API_KEY")
@@ -71,10 +74,34 @@ def build_prompt(req: Request) -> str:
     return "".join(parts) + SUMMARY_HINT
 
 
+def _rule_path(path: Path) -> str:
+    """C:/Users/x -> //c/Users/x, the absolute-path form Claude Code permission rules use."""
+    posix = path.resolve().as_posix()
+    if len(posix) > 1 and posix[1] == ":":
+        posix = "/" + posix[0].lower() + posix[2:]
+    return "/" + posix
+
+
+def protected_rules(settings: Settings) -> list[str]:
+    """Claude may never change sayitship itself or read its secrets, whatever the project."""
+    repo, data = _rule_path(REPO_ROOT), _rule_path(settings.data_dir)
+    rules = [f"Edit({repo}/**)", f"Write({repo}/**)", f"Read({repo}/.env)"]
+    rules += [f"Edit({data}/**)", f"Write({data}/**)", f"Read({data}/*.db)", f"Read({data}/*.log)"]
+    return rules
+
+
+def hook_python() -> Path:
+    """The hook needs a console Python: under autostart sys.executable is pythonw.exe."""
+    exe = Path(sys.executable)
+    console = exe.with_name("python.exe")
+    return console if exe.name.lower() == "pythonw.exe" and console.exists() else exe
+
+
 def hook_settings_file(settings: Settings) -> Path:
-    """Write the Claude Code settings that route every Bash call through hook.py."""
-    command = f'"{Path(sys.executable).as_posix()}" "{HOOK_SCRIPT.as_posix()}"'
+    """Write the Claude Code settings: every Bash call goes through hook.py; sayitship is off limits."""
+    command = f'"{hook_python().as_posix()}" "{HOOK_SCRIPT.as_posix()}"'
     data = {
+        "permissions": {"deny": protected_rules(settings)},
         "hooks": {
             "PreToolUse": [
                 {
@@ -116,11 +143,12 @@ def child_env(settings: Settings, hook_token: str) -> dict[str, str]:
     env["SAYITSHIP_URL"] = settings.public_url
     env["SAYITSHIP_HOOK_TOKEN"] = hook_token
     env["SAYITSHIP_APPROVAL_TIMEOUT"] = str(settings.approval_timeout)
+    env["SAYITSHIP_PROTECTED"] = "|".join({REPO_ROOT.as_posix(), settings.data_dir.as_posix()})
     return env
 
 
 def parse_claude_output(stdout: str) -> tuple[str, str | None, bool]:
-    """Return (one-line summary, session id, is_error) from claude's JSON output."""
+    """Return (last paragraph, session id, is_error) from claude's JSON output."""
     try:
         data = json.loads(stdout)
     except json.JSONDecodeError:
@@ -129,8 +157,9 @@ def parse_claude_output(stdout: str) -> tuple[str, str | None, bool]:
     session_id = data.get("session_id")
     if data.get("is_error"):
         return f"Error: {result or data.get('subtype', 'unknown')}"[:MAX_SUMMARY], session_id, True
-    lines = [line.strip() for line in result.splitlines() if line.strip()]
-    return (lines[-1] if lines else "Done (no text output).")[:MAX_SUMMARY], session_id, False
+    paragraphs = [p.strip() for p in re.split(r"\n\s*\n", result) if p.strip()]
+    summary = paragraphs[-1] if paragraphs else "Done (no text output)."
+    return _short(summary, MAX_SUMMARY), session_id, False
 
 
 def run_claude(

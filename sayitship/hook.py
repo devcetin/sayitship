@@ -21,13 +21,28 @@ SAFE_COMMANDS = (
     "where", "which", "rg", "grep", "find", "tree",
     "python --version", "node --version", "npm --version",
 )
-# Chaining, redirection, substitution and destructive find flags make any command unsafe.
-UNSAFE_PATTERN = re.compile(r"[;&|<>`\n]|\$\(|-exec|-delete|-ok\b")
+# Chaining, redirection, substitution, environment expansion and flags that run programs
+# or write files make any command unsafe.
+UNSAFE_PATTERN = re.compile(
+    r"[;&|<>`\n$]"
+    r"|-exec|-ok|-delete|-fprint|-fls"  # find: run programs, write files
+    r"|--pre\b|--pre-glob"  # rg: run a preprocessor program
+    r"|--output|--ext-diff|--textconv|-o\b"  # git diff/log: write files, run filters
+)
+# git branch may only list branches.
+GIT_BRANCH_WRITE = re.compile(r"^git branch\s+(?!(-a|-r|-v|-vv|--all|--list|--show-current)(\s|$))")
+# Secrets and the sayitship code itself stay off limits, even for "read-only" commands.
+PROTECTED_WORDS = (".env", "sayitship.db", "hook.py")
 
 
-def is_safe(command: str) -> bool:
+def is_safe(command: str, protected: list[str] | None = None) -> bool:
     command = command.strip()
-    if not command or UNSAFE_PATTERN.search(command):
+    if not command or UNSAFE_PATTERN.search(command) or GIT_BRANCH_WRITE.search(command):
+        return False
+    lowered = command.lower().replace("\\", "/")
+    if any(word in lowered for word in PROTECTED_WORDS):
+        return False
+    if any(p and p.lower() in lowered for p in protected or []):
         return False
     return any(command == safe or command.startswith(safe + " ") for safe in SAFE_COMMANDS)
 
@@ -72,7 +87,8 @@ def handle(event: dict, env: dict) -> dict:
     tool_input = event.get("tool_input") or {}
     if tool == "Bash":
         command = str(tool_input.get("command", ""))
-        if is_safe(command):
+        protected = [p for p in env.get("SAYITSHIP_PROTECTED", "").split("|") if p]
+        if is_safe(command, protected):
             return decision("allow", "Read-only command.")
         detail = command
     else:
@@ -92,9 +108,14 @@ def handle(event: dict, env: dict) -> dict:
 def main() -> None:
     try:
         event = json.loads(sys.stdin.buffer.read().decode("utf-8"))
-    except ValueError:
-        event = {}
-    sys.stdout.write(json.dumps(handle(event, dict(os.environ))))
+        result = handle(event, dict(os.environ))
+    except Exception as exc:  # fail closed, whatever went wrong
+        result = decision("deny", f"Approval hook crashed ({type(exc).__name__}). Do not retry.")
+    try:
+        sys.stdout.write(json.dumps(result))
+        sys.stdout.flush()
+    except Exception:
+        sys.exit(2)  # exit code 2 makes Claude Code block the call
 
 
 if __name__ == "__main__":

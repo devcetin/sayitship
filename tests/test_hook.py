@@ -16,10 +16,35 @@ def test_read_only_commands_are_safe(command):
     [
         "rm -rf /", "npm install", "git push", "git status; rm x", "cat a > b", "ls | sh",
         "echo $(whoami)", "find . -delete", "find . -exec rm {} ;", "lsblk", "", "git statusx",
+        "rg --pre ./evil.sh x .", "git branch -D main", "git branch new-branch", "find . -fprint f",
+        "find . -okdir rm {} ;", "git diff --output=f", "echo $SAYITSHIP_HOOK_TOKEN",
+        "cat .env", "cat ../sayitship/.env", "grep -r key C:\\Users\\x\\data\\sayitship.db",
+        "cat sayitship/hook.py",
     ],
 )
 def test_other_commands_are_not_safe(command):
     assert not hook.is_safe(command)
+
+
+def test_git_branch_listing_is_still_safe():
+    assert hook.is_safe("git branch") and hook.is_safe("git branch -a") and hook.is_safe("git branch --show-current")
+
+
+def test_protected_folders_need_approval():
+    protected = ["C:/Users/x/Desktop/sayitship"]
+    assert not hook.is_safe("ls C:\\Users\\x\\Desktop\\sayitship\\data", protected)
+    assert hook.is_safe("ls C:/code/other", protected)
+
+
+def test_main_fails_closed_on_any_crash(monkeypatch, capsys):
+    import io
+    import json
+
+    monkeypatch.setattr(hook.sys, "stdin", type("S", (), {"buffer": io.BytesIO(b'{"tool_name": "Bash"}')})())
+    monkeypatch.setattr(hook, "handle", lambda *a: 1 / 0)
+    hook.main()
+    out = json.loads(capsys.readouterr().out)
+    assert out["hookSpecificOutput"]["permissionDecision"] == "deny"
 
 
 def test_safe_bash_is_allowed_without_asking(monkeypatch):

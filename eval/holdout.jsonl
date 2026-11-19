@@ -1,0 +1,20 @@
+{"id": "h01", "text": "WebSocket ile HTTP polling arasındaki fark ne", "expected": {"route": "answer"}}
+{"id": "h02", "text": "what is a race condition", "expected": {"route": "answer"}}
+{"id": "h03", "text": "pandas'ta loc ile iloc farkı nedir", "expected": {"route": "answer"}}
+{"id": "h04", "text": "nginx reverse proxy ne işe yarar kısaca", "expected": {"route": "answer"}}
+{"id": "h05", "text": "Ankara'da şu an kaç derece", "expected": {"route": "task", "project": "sandbox", "session": "new"}}
+{"id": "h06", "text": "bitcoin bugün kaç dolar", "expected": {"route": "task", "project": "sandbox", "session": "new"}}
+{"id": "h07", "text": "yapılacaklar listeme cumartesi araba muayenesi ekle", "expected": {"route": "task", "project": "sandbox", "session": "new"}}
+{"id": "h08", "text": "blog yazılarının altına okuma süresi göster", "expected": {"route": "task", "project": "blog", "session": "continue"}}
+{"id": "h09", "text": "add a tags page that lists all posts by tag on my site", "expected": {"route": "task", "project": "blog", "session": "continue"}}
+{"id": "h10", "text": "bütçe uygulamasında bildirim izni isteme ekranı ekle", "expected": {"route": "task", "project": "budget-app", "session": "new"}}
+{"id": "h11", "text": "the firestore fix from earlier on the login screen, revert it", "expected": {"route": "task", "project": "budget-app", "session": "continue"}}
+{"id": "h12", "text": "CIFAR deneyinde learning rate scheduler kullan", "expected": {"route": "task", "project": "ml-notes", "session": "continue"}}
+{"id": "h13", "text": "plot a confusion matrix for the last trained model", "expected": {"route": "task", "project": "ml-notes", "session": "continue"}}
+{"id": "h14", "text": "ses asistanı sunucusuna rate limit ekle", "expected": {"route": "task", "project": "sayitship", "session": "new"}}
+{"id": "h15", "text": "yeni oturum aç, ml notlarında transfer learning ile ResNet dene", "expected": {"route": "task", "project": "ml-notes", "session": "new"}}
+{"id": "h16", "text": "lint hatalarını düzelt", "expected": {"route": "task", "project": "blog", "session": "continue"}}
+{"id": "h17", "text": "panodaki stack trace neyi gösteriyor düzeltir misin", "clipboard": "Traceback (most recent call last):\n  File \"train.py\", line 88, in <module>\n    loss.backward()\nRuntimeError: CUDA out of memory. Tried to allocate 2.00 GiB", "expected": {"route": "task", "project": "ml-notes", "session": "continue"}}
+{"id": "h18", "text": "cey ess on ile yaml arasındaki fark ne", "expected": {"route": "answer"}}
+{"id": "h19", "text": "flatır projesinde rivırpod ile state yönetimine geç", "expected": {"route": "task", "project": "budget-app", "session": "new"}}
+{"id": "h20", "text": "nekst cey es ile astro arasında blog için hangisi daha iyi", "expected": {"route": "answer"}}

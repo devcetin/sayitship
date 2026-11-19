@@ -128,12 +128,12 @@ def summarize(model: str, rows: list[dict], prices: dict) -> dict:
     }
 
 
-def write_report(summaries: list[dict], path: Path, cases: int) -> None:
+def write_report(summaries: list[dict], path: Path, cases: int, dataset: str = "dataset") -> None:
     header = "| model | exact | route | project | session | noisy dictation | p50 | p95 | cost / 1000 requests | errors |"
     lines = [
         "# Router eval results",
         "",
-        f"{cases} cases from `eval/dataset.jsonl`, run on {time.strftime('%Y-%m-%d')}.",
+        f"{cases} cases from `eval/{dataset}.jsonl`, run on {time.strftime('%Y-%m-%d')}.",
         "",
         header,
         "|---|---|---|---|---|---|---|---|---|---|",
@@ -164,7 +164,12 @@ def main() -> None:
     parser.add_argument("--delay", type=float, default=4.0, help="seconds between calls (free tier limits)")
     parser.add_argument("--limit", type=int, default=0, help="only the first N cases")
     parser.add_argument("--report", action="store_true", help="rebuild results.md from saved results")
+    parser.add_argument(
+        "--dataset", default="dataset", help="dataset (tuned on) or holdout (never tuned on)"
+    )
     args = parser.parse_args()
+    suffix = "" if args.dataset == "dataset" else f"-{args.dataset}"
+    report_path = EVAL_DIR / f"results{suffix}.md"
     models = [m.strip() for m in args.models.split(",") if m.strip()]
     prices_file = EVAL_DIR / "prices.json"
     prices = json.loads(prices_file.read_text(encoding="utf-8")) if prices_file.exists() else {}
@@ -172,17 +177,17 @@ def main() -> None:
     if args.report:
         summaries, cases = [], 0
         for model in models:
-            rows = load_cases(EVAL_DIR / "results" / f"{model}.jsonl")
+            rows = load_cases(EVAL_DIR / "results" / f"{args.dataset}-{model}.jsonl")
             cases = len(rows)
             summaries.append(summarize(model, rows, prices))
-        write_report(summaries, EVAL_DIR / "results.md", cases)
-        print(f"wrote {EVAL_DIR / 'results.md'}")
+        write_report(summaries, report_path, cases, args.dataset)
+        print(f"wrote {report_path}")
         return
 
     api_key = user_env("GEMINI_API_KEY")
     if not api_key:
         raise SystemExit("GEMINI_API_KEY is not set.")
-    cases = load_cases(EVAL_DIR / "dataset.jsonl")
+    cases = load_cases(EVAL_DIR / f"{args.dataset}.jsonl")
     if args.limit:
         cases = cases[: args.limit]
     projects, history = load_fixture(EVAL_DIR / "projects.json")
@@ -192,13 +197,13 @@ def main() -> None:
     summaries = []
     for model in models:
         rows = run_model(model, cases, projects, history, api_key, args.delay)
-        with (out_dir / f"{model}.jsonl").open("w", encoding="utf-8") as f:
+        with (out_dir / f"{args.dataset}-{model}.jsonl").open("w", encoding="utf-8") as f:
             for row in rows:
                 f.write(json.dumps(row, ensure_ascii=False) + "\n")
         summaries.append(summarize(model, rows, prices))
         print(summaries[-1])
-    write_report(summaries, EVAL_DIR / "results.md", len(cases))
-    print(f"wrote {EVAL_DIR / 'results.md'}")
+    write_report(summaries, report_path, len(cases), args.dataset)
+    print(f"wrote {report_path}")
 
 
 if __name__ == "__main__":

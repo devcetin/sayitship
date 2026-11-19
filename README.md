@@ -43,21 +43,32 @@ session, against a fixed set of five example projects (`eval/projects.json`).
 python -m sayitship.evaluate --models gemini-3.5-flash-lite,gemini-flash-lite-latest
 ```
 
-Latest run, 90 cases ([full report](eval/results.md), per-case output in `eval/results/`):
+Two sets, both public:
 
-| model | exact | route | project | session | noisy dictation | p50 | cost / 1000 requests |
+- `eval/dataset.jsonl`, 90 cases. The routing rules and labels were refined while looking at
+  results on this set, so it is **in-sample**.
+- `eval/holdout.jsonl`, 20 cases written after the rules were frozen and run once
+  (`--dataset holdout`). Small, but never tuned on.
+
+| set | model | exact | route | project | session | p50 | cost / 1000 requests |
 |---|---|---|---|---|---|---|---|
-| gemini-3.5-flash-lite | **97%** | 100% | 97% | 98% | 100% | 2.6 s | $0.44 |
-| gemini-flash-lite-latest | 94% | 99% | 97% | 97% | 100% | 1.6 s | – |
+| dataset (90) | gemini-3.5-flash-lite | **97%** | 100% | 97% | 98% | 2.6 s | $0.44 |
+| dataset (90) | gemini-flash-lite-latest | 94% | 99% | 97% | 97% | 1.6 s | – |
+| holdout (20) | gemini-3.5-flash-lite | **100%** | 100% | 100% | 100% | 1.3 s | $0.44 |
 
-What the numbers taught me:
+Full reports: [eval/results.md](eval/results.md), [eval/results-holdout.md](eval/results-holdout.md);
+per-case output in `eval/results/`.
 
-- **Unclear rules looked like model errors.** A first run scored 80% on sessions. Most "mistakes"
-  were cases where my own labels were inconsistent, so I wrote an explicit rule (continue if the
-  project was active in the last 30 minutes, or the request points at the last task; a spoken
-  "fresh start" always wins), relabeled the set and put the rule in the prompt.
-- **Dictation repair works on text.** "pay torç notbukuna batç normalizasyon ekle" becomes
+Notes:
+
+- **Rules before models.** A first run scored 80% on sessions, mostly because the labels
+  themselves were inconsistent. Writing the rule down (continue if the project was active in the
+  last 30 minutes or the request points at the last task; a spoken "fresh start" always wins)
+  fixed both the labels and the prompt.
+- **Dictation repair on text.** "pay torç notbukuna batç normalizasyon ekle" becomes
   "PyTorch notebook'una batch normalization ekle"; all 10 noisy cases were routed correctly.
+- **The eval covers the text path.** The recommended Shortcut sends audio, which the router
+  transcribes itself; that path is tested by hand, not yet measured by the eval.
 - **The free API is often overloaded.** Many calls got `503`, so the server tries the next model
   in `ROUTER_MODELS` and, if all fail, falls back to running the request as a new task.
 
@@ -81,7 +92,8 @@ runs as a new task in the first project.
 
 Then build the Shortcuts: [docs/shortcut.md](docs/shortcut.md).
 
-To start the server automatically when you log in:
+To start the server automatically when you log in (Windows Task Scheduler; logs go to
+`data\sayitship.log`):
 
 ```powershell
 .\scripts\install-autostart.ps1
@@ -116,16 +128,22 @@ Your voice can run code on your computer, so the defaults are strict:
 - **Token on every request.** Compared in constant time.
 - **Project allowlist.** Claude Code runs only in folders listed in `projects.json`; a request
   can name a project, never a path.
-- **Approval for commands.** Claude may read, edit, search the web and run read-only commands
-  (`git status`, `ls`, …) on its own. Any other shell command goes through a hook that sends you a
-  Yes/No notification and waits. No answer in 5 minutes means No. If the approval system fails,
-  the answer is No.
+- **Approval for commands.** Claude may read, edit and search the web on its own. Shell access
+  is not in Claude's allowed tools at all: every command goes through a hook. Read-only commands
+  (`git status`, `ls`, …) are allowed by the hook; anything else sends you a Yes/No notification
+  and waits. No answer in 5 minutes means No. If the hook crashes or cannot start, Claude Code
+  falls back to its own default, which in headless mode is No. Both cases were tested with a
+  real `claude -p` run.
 - **No secrets in notifications.** Yes/No buttons carry a one-time key for that one question,
   stored only as a hash, valid once and only for a few minutes. The main token never goes to ntfy.
-- **Secrets stay out of the agent.** The Claude process does not inherit the server token, the
-  ntfy topic or the Gemini key.
-- **Know the limits.** `acceptEdits` lets Claude change files inside the project without asking.
-  Use git, and keep projects you can't afford to break out of `projects.json`.
+- **The agent cannot touch sayitship itself.** Permission rules generated for every run deny
+  Claude editing the sayitship folder (so it cannot rewrite its own approval hook) and reading
+  `.env`, the database and logs. Shell commands that mention them always need your approval.
+  The Claude process also does not inherit the server token, the ntfy topic or the Gemini key.
+  Don't list the sayitship folder itself in `projects.json`.
+- **Know the limits.** `acceptEdits` lets Claude change files inside the project without asking,
+  and `Read` is not limited to the project folder. Use git, and keep projects you can't afford to
+  break out of `projects.json`.
 
 ## Roadmap
 

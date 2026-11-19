@@ -103,6 +103,8 @@ def load_settings() -> Settings:
         claude_args=os.environ.get(
             "CLAUDE_ARGS",
             "--permission-mode acceptEdits "
-            "--allowedTools Read Edit Write Glob Grep WebSearch WebFetch Bash",
+            # Bash is left out on purpose: only the approval hook's "allow" can grant it,
+            # so a broken hook means "no", never "yes".
+            "--allowedTools Read Edit Write Glob Grep WebSearch WebFetch",
         ).split(),
     )

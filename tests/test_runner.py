@@ -82,6 +82,25 @@ def test_prompt_includes_context():
     assert "https://x.dev" in prompt and "C:/d/inbox/t.png" in prompt
 
 
+def test_settings_protect_sayitship_itself(settings):
+    data = json.loads(runner.hook_settings_file(settings).read_text())
+    deny = data["permissions"]["deny"]
+    repo = runner._rule_path(runner.REPO_ROOT)
+    assert repo.startswith("//") and ":" not in repo
+    assert f"Edit({repo}/**)" in deny and f"Read({repo}/.env)" in deny
+    assert any(rule.startswith("Read(") and rule.endswith("/*.db)") for rule in deny)
+
+
+def test_rule_path_windows_drive():
+    from pathlib import PureWindowsPath
+
+    class P(type(PureWindowsPath())):
+        def resolve(self):
+            return self
+
+    assert runner._rule_path(P("C:/Users/x/repo")) == "//c/Users/x/repo"
+
+
 def test_build_command_and_hook_settings(settings):
     path = runner.hook_settings_file(settings)
     hooks = json.loads(path.read_text())["hooks"]["PreToolUse"][0]
@@ -104,6 +123,9 @@ def test_child_env_hides_secrets_and_parent_claude_vars(monkeypatch, settings):
 def test_parse_claude_output():
     out = json.dumps({"result": "Did things.\n\nREADME güncellendi.", "is_error": False, "session_id": "s"})
     assert runner.parse_claude_output(out) == ("README güncellendi.", "s", False)
+    weather = "Kaynaklara baktım.\n\nYarın İstanbul'da 14°C,\nöğleden sonra yağmur bekleniyor."
+    summary = runner.parse_claude_output(json.dumps({"result": weather}))[0]
+    assert summary == "Yarın İstanbul'da 14°C,\nöğleden sonra yağmur bekleniyor."
     assert runner.parse_claude_output("not json")[2] is True
     assert runner.parse_claude_output(json.dumps({"result": "boom", "is_error": True}))[0] == "Error: boom"
 
