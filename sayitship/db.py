@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS tasks (
     id TEXT PRIMARY KEY,
     created REAL NOT NULL,
     text TEXT NOT NULL,
+    understood TEXT,
     has_clipboard INTEGER DEFAULT 0,
     has_url INTEGER DEFAULT 0,
     has_image INTEGER DEFAULT 0,
@@ -41,7 +42,7 @@ CREATE TABLE IF NOT EXISTS sessions (
 """
 
 TASK_FIELDS = {
-    "route", "project", "session", "router_model", "router_ms", "router_reason",
+    "understood", "route", "project", "session", "router_model", "router_ms", "router_reason",
     "status", "summary", "claude_session_id", "finished",
 }
 
@@ -53,6 +54,10 @@ class Store:
         self._conn.row_factory = sqlite3.Row
         with self._lock:
             self._conn.executescript(SCHEMA)
+            columns = {r[1] for r in self._conn.execute("PRAGMA table_info(tasks)")}
+            if "understood" not in columns:  # databases created before this column existed
+                self._conn.execute("ALTER TABLE tasks ADD COLUMN understood TEXT")
+                self._conn.commit()
 
     def _exec(self, sql: str, params: tuple = ()) -> list[sqlite3.Row]:
         with self._lock:
@@ -74,6 +79,17 @@ class Store:
             raise ValueError(f"unknown task fields: {unknown}")
         cols = ", ".join(f"{k} = ?" for k in fields)
         self._exec(f"UPDATE tasks SET {cols} WHERE id = ?", (*fields.values(), task_id))
+
+    def mark_interrupted(self) -> int:
+        """At startup: tasks left queued or running by a previous server process never finish."""
+        with self._lock:
+            cur = self._conn.execute(
+                "UPDATE tasks SET status = 'interrupted', finished = ? "
+                "WHERE status IN ('queued', 'running')",
+                (time.time(),),
+            )
+            self._conn.commit()
+            return cur.rowcount
 
     def get_task(self, task_id: str) -> dict | None:
         rows = self._exec("SELECT * FROM tasks WHERE id = ?", (task_id,))

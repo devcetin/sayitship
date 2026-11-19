@@ -99,3 +99,42 @@ def test_approval_rejects_wrong_key_and_expired(client, notifications, store):
     assert c.post(f"/approvals/{approval_id}/maybe?key={key}").status_code == 404
     store._exec("UPDATE approvals SET created = ?", (time.time() - 3600,))
     assert c.post(f"/approvals/{approval_id}/allow?key={key}").status_code == 410
+
+
+M4A = base64.b64encode(b"\x00\x00\x00\x20ftypM4A " + b"0" * 32).decode()
+
+
+def test_audio_without_text_is_accepted(client, settings):
+    c, processed = client
+    object.__setattr__(settings, "gemini_api_key", "k")
+    r = c.post("/task", json={"audio": M4A}, headers=auth())
+    assert r.status_code == 202
+    req = processed[0][0]
+    assert req.text == "" and req.audio[1] == "audio/mp4" and req.audio[0].startswith(b"\x00\x00\x00\x20ftyp")
+
+
+def test_audio_needs_gemini_key_and_known_format(client, settings):
+    c, processed = client
+    assert c.post("/task", json={"audio": M4A}, headers=auth()).status_code == 422  # no key
+    object.__setattr__(settings, "gemini_api_key", "k")
+    bad = base64.b64encode(b"not audio at all").decode()
+    assert c.post("/task", json={"audio": bad}, headers=auth()).status_code == 422
+    assert c.post("/task", json={}, headers=auth()).status_code == 422  # neither text nor audio
+    assert processed == []
+
+
+def test_audio_mime_detection():
+    assert main.audio_mime(b"RIFF\x00\x00\x00\x00WAVEfmt ") == "audio/wav"
+    assert main.audio_mime(b"ID3\x04") == "audio/mp3"
+    assert main.audio_mime(b"OggS\x00") == "audio/ogg"
+    assert main.audio_mime(b"RIFF\x00\x00\x00\x00WEBP") is None
+
+
+def test_unfinished_tasks_are_marked_interrupted_on_restart(store):
+    store.add_task("old", "x", False, False, False)
+    store.update_task("old", status="running")
+    store.add_task("done", "y", False, False, False)
+    store.update_task("done", status="done")
+    assert store.mark_interrupted() == 1
+    assert store.get_task("old")["status"] == "interrupted"
+    assert store.get_task("done")["status"] == "done"

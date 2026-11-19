@@ -39,6 +39,12 @@ class Request:
     url: str = ""
     image_path: Path | None = None
     project: str | None = None  # forced by the client; skips the router's project choice
+    understood: str = ""  # the router's cleaned-up text, or its transcript of the audio
+    audio: tuple[bytes, str] | None = None  # (recording, mime type) instead of dictated text
+
+
+def _short(text: str, limit: int = 80) -> str:
+    return text if len(text) <= limit else text[: limit - 1] + "…"
 
 
 def project_lock(name: str) -> threading.Lock:
@@ -48,7 +54,12 @@ def project_lock(name: str) -> threading.Lock:
 
 
 def build_prompt(req: Request) -> str:
-    parts = [req.text]
+    parts = [req.understood or req.text]
+    if req.text and req.understood and req.understood != req.text:
+        parts.append(
+            f"\n\n(This request came from voice dictation. Raw transcript: \"{req.text}\". "
+            "If the cleaned-up version above looks wrong, go by the transcript.)"
+        )
     if req.clipboard:
         parts.append(f"\n\nClipboard content sent with this request:\n<clipboard>\n{req.clipboard}\n</clipboard>")
     if req.url:
@@ -167,14 +178,23 @@ def _process(req: Request, settings: Settings, store: Store, hook_token: str) ->
     projects = [{"name": p.name, "description": p.description} for p in settings.projects.values()]
     decision = router.route(
         req.text, projects, history, settings.gemini_api_key, settings.router_models,
-        clipboard=req.clipboard, url=req.url, has_image=req.image_path is not None,
+        clipboard=req.clipboard, url=req.url, has_image=req.image_path is not None, audio=req.audio,
     )
+    if req.audio and decision.model == "fallback":
+        # Without the model there is no transcript, so there is nothing to run.
+        store.update_task(req.task_id, status="error", summary="transcription failed", finished=time.time())
+        send_notification(
+            settings.ntfy_server, settings.ntfy_topic, "⚠️ sayitship couldn't hear you",
+            "The speech model did not answer. Please try again in a moment.",
+        )
+        return
     if req.project:  # the client chose the project explicitly
         decision.route, decision.project = "task", req.project
+    req.understood = decision.request
     store.update_task(
-        req.task_id, route=decision.route, project=decision.project, session=decision.session,
-        router_model=decision.model, router_ms=decision.latency_ms, router_reason=decision.reason,
-        status="running",
+        req.task_id, understood=decision.request, route=decision.route, project=decision.project,
+        session=decision.session, router_model=decision.model, router_ms=decision.latency_ms,
+        router_reason=decision.reason, status="running",
     )
     log.info(
         "task %s routed by %s in %d ms: %s / %s / %s (%s)", req.task_id, decision.model,
@@ -183,7 +203,9 @@ def _process(req: Request, settings: Settings, store: Store, hook_token: str) ->
 
     if decision.route == "answer":
         store.update_task(req.task_id, status="done", summary=decision.answer, finished=time.time())
-        send_notification(settings.ntfy_server, settings.ntfy_topic, "⚡ answer", decision.answer)
+        send_notification(
+            settings.ntfy_server, settings.ntfy_topic, f"⚡ {_short(decision.request)}", decision.answer
+        )
         return
 
     project = settings.projects[decision.project]
@@ -193,7 +215,7 @@ def _process(req: Request, settings: Settings, store: Store, hook_token: str) ->
         resume_id = last["session_id"] if decision.session == "continue" and last else None
         summary, session_id, failed = run_claude(req, project, resume_id, settings, hook_token)
         if session_id and not failed:
-            store.save_session(project.name, session_id, req.text)
+            store.save_session(project.name, session_id, req.understood or req.text)
 
     store.update_task(
         req.task_id, status="error" if failed else "done", summary=summary,
@@ -201,4 +223,5 @@ def _process(req: Request, settings: Settings, store: Store, hook_token: str) ->
     )
     mode = "continue" if resume_id else "new"
     title = f"⚠️ {project.name} · error" if failed else f"🛠 {project.name} · {mode}"
-    send_notification(settings.ntfy_server, settings.ntfy_topic, title, summary)
+    message = f"{summary}\n\n🎙 {req.understood}" if req.understood else summary
+    send_notification(settings.ntfy_server, settings.ntfy_topic, title, message)

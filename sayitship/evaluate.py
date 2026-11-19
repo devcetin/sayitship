@@ -121,6 +121,7 @@ def summarize(model: str, rows: list[dict], prices: dict) -> dict:
         "route": _pct([r["score"]["route"] for r in rows]),
         "project": _pct([r["score"]["project"] for r in rows]),
         "session": _pct([r["score"]["session"] for r in rows]),
+        "dictation": _pct([r["score"]["exact"] for r in rows if r.get("id", "").startswith("n")]),
         "p50_ms": _percentile(latencies, 0.5),
         "p95_ms": _percentile(latencies, 0.95),
         "cost_per_1000": f"${cost:.3f}" if cost is not None else "-",
@@ -128,24 +129,25 @@ def summarize(model: str, rows: list[dict], prices: dict) -> dict:
 
 
 def write_report(summaries: list[dict], path: Path, cases: int) -> None:
-    header = "| model | exact | route | project | session | p50 | p95 | cost / 1000 requests | errors |"
+    header = "| model | exact | route | project | session | noisy dictation | p50 | p95 | cost / 1000 requests | errors |"
     lines = [
         "# Router eval results",
         "",
         f"{cases} cases from `eval/dataset.jsonl`, run on {time.strftime('%Y-%m-%d')}.",
         "",
         header,
-        "|---|---|---|---|---|---|---|---|---|",
+        "|---|---|---|---|---|---|---|---|---|---|",
     ]
     for s in summaries:
         lines.append(
-            f"| {s['model']} | {s['exact']} | {s['route']} | {s['project']} | {s['session']} "
+            f"| {s['model']} | {s['exact']} | {s['route']} | {s['project']} | {s['session']} | {s['dictation']} "
             f"| {s['p50_ms']} ms | {s['p95_ms']} ms | {s['cost_per_1000']} | {s['errors']} |"
         )
     lines += [
         "",
         "- **exact**: route, project and session all right.",
         "- **project / session**: scored only on cases where the right answer is a task.",
+        "- **noisy dictation**: exact score on the `n*` cases, where speech-to-text mangled technical words.",
         "- Latency is measured from this PC, including network; errors are excluded from latency and cost.",
         "- Cost uses token counts reported by the API and prices in `eval/prices.json`.",
     ]

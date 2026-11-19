@@ -24,14 +24,14 @@
 {"id": "t06", "text": "write a small python script that renames all jpg files by date", "expected": {"route": "task", "project": "sandbox", "session": "new"}}
 {"id": "t07", "text": "bir tane fizzbuzz yaz dene bakalım", "expected": {"route": "task", "project": "sandbox", "session": "new"}}
 {"id": "t08", "text": "summarize the latest news about AI regulation in the EU", "expected": {"route": "task", "project": "sandbox", "session": "new"}}
-{"id": "t09", "text": "blog'a yeni bir yazı taslağı aç başlığı ilk projem olsun", "expected": {"route": "task", "project": "blog", "session": "new"}}
-{"id": "t10", "text": "add an RSS feed to my blog", "expected": {"route": "task", "project": "blog", "session": "new"}}
-{"id": "t11", "text": "Astro sitesinin build hatasını çöz", "expected": {"route": "task", "project": "blog", "session": "new"}}
+{"id": "t09", "text": "blog'a yeni bir yazı taslağı aç başlığı ilk projem olsun", "expected": {"route": "task", "project": "blog", "session": "continue"}}
+{"id": "t10", "text": "add an RSS feed to my blog", "expected": {"route": "task", "project": "blog", "session": "continue"}}
+{"id": "t11", "text": "Astro sitesinin build hatasını çöz", "expected": {"route": "task", "project": "blog", "session": "continue"}}
 {"id": "t12", "text": "bir de footer'ın rengini de koyu yap", "expected": {"route": "task", "project": "blog", "session": "continue"}}
 {"id": "t13", "text": "az önce eklediğin dark mode düğmesini sağa al", "expected": {"route": "task", "project": "blog", "session": "continue"}}
 {"id": "t14", "text": "the toggle you just added, make it remember the choice in local storage", "expected": {"route": "task", "project": "blog", "session": "continue"}}
 {"id": "t15", "text": "onu geri al dark mode hiç olmasın", "expected": {"route": "task", "project": "blog", "session": "continue"}}
-{"id": "t16", "text": "netlify ayarlarına bak deploy neden düşüyor blogda", "expected": {"route": "task", "project": "blog", "session": "new"}}
+{"id": "t16", "text": "netlify ayarlarına bak deploy neden düşüyor blogda", "expected": {"route": "task", "project": "blog", "session": "continue"}}
 {"id": "t17", "text": "harcama uygulamasına kategori bazlı grafik ekle", "expected": {"route": "task", "project": "budget-app", "session": "new"}}
 {"id": "t18", "text": "add a monthly budget limit screen to the flutter app", "expected": {"route": "task", "project": "budget-app", "session": "new"}}
 {"id": "t19", "text": "Firestore kurallarını kontrol et herkes herkesin verisini okuyabiliyor mu", "expected": {"route": "task", "project": "budget-app", "session": "new"}}
@@ -42,8 +42,8 @@
 {"id": "t24", "text": "CNN notebook'una batch normalization ekleyip tekrar dene", "expected": {"route": "task", "project": "ml-notes", "session": "continue"}}
 {"id": "t25", "text": "şimdi de 10 epoch ile eğit ve sonuçları karşılaştır", "expected": {"route": "task", "project": "ml-notes", "session": "continue"}}
 {"id": "t26", "text": "also save the trained model weights to disk", "expected": {"route": "task", "project": "ml-notes", "session": "continue"}}
-{"id": "t27", "text": "yeni bir notebook aç MNIST üzerinde basit bir MLP eğit", "expected": {"route": "task", "project": "ml-notes", "session": "new"}}
-{"id": "t28", "text": "create a notebook that compares SGD and Adam on a toy dataset", "expected": {"route": "task", "project": "ml-notes", "session": "new"}}
+{"id": "t27", "text": "yeni bir notebook aç MNIST üzerinde basit bir MLP eğit", "expected": {"route": "task", "project": "ml-notes", "session": "continue"}}
+{"id": "t28", "text": "create a notebook that compares SGD and Adam on a toy dataset", "expected": {"route": "task", "project": "ml-notes", "session": "continue"}}
 {"id": "t29", "text": "loss grafiğinin eksen başlıklarını Türkçe yap", "expected": {"route": "task", "project": "ml-notes", "session": "continue"}}
 {"id": "t30", "text": "sayitship'te router'ın loglarına model adını da ekle", "expected": {"route": "task", "project": "sayitship", "session": "new"}}
 {"id": "t31", "text": "add a health check that also verifies the claude command exists, in the voice server", "expected": {"route": "task", "project": "sayitship", "session": "new"}}
@@ -51,30 +51,40 @@
 {"id": "t33", "text": "FastAPI sunucusunun testlerini çalıştır ve kırılan var mı söyle", "expected": {"route": "task", "project": "sayitship", "session": "new"}}
 {"id": "t34", "text": "ntfy bildirimlerine öncelik seviyesi ekle", "expected": {"route": "task", "project": "sayitship", "session": "new"}}
 {"id": "t35", "text": "the approval timeout should be configurable per project in sayitship", "expected": {"route": "task", "project": "sayitship", "session": "new"}}
-{"id": "c01", "text": "panodaki hatayı düzelt", "clipboard": "Error: Cannot find module '@astrojs/tailwind' imported from astro.config.mjs", "expected": {"route": "task", "project": "blog", "session": "new"}}
+{"id": "c01", "text": "panodaki hatayı düzelt", "clipboard": "Error: Cannot find module '@astrojs/tailwind' imported from astro.config.mjs", "expected": {"route": "task", "project": "blog", "session": "continue"}}
 {"id": "c02", "text": "fix this", "clipboard": "FirebaseException: [cloud_firestore/permission-denied] Missing or insufficient permissions. lib/screens/expenses.dart:42", "expected": {"route": "task", "project": "budget-app", "session": "new"}}
 {"id": "c03", "text": "bu hata ne demek ve düzelt", "clipboard": "RuntimeError: mat1 and mat2 shapes cannot be multiplied (64x1024 and 512x10)", "expected": {"route": "task", "project": "ml-notes", "session": "continue"}}
 {"id": "c04", "text": "bu linkteki makaleyi özetle notlarıma kaydet", "url": "https://example.com/2026/attention-is-still-all-you-need", "expected": {"route": "task", "project": "sandbox", "session": "new"}}
 {"id": "c05", "text": "use this library for the retry logic", "url": "https://pypi.org/project/tenacity/", "clipboard": "", "expected": {"route": "task", "project": "sayitship", "session": "new"}}
 {"id": "c06", "text": "panodaki metni İngilizceye çevirip bir dosyaya kaydet", "clipboard": "Yarınki sunum için slaytları hazırla ve bütçe tablosunu güncelle.", "expected": {"route": "task", "project": "sandbox", "session": "new"}}
-{"id": "c07", "text": "ekran görüntüsündeki tasarımı blog ana sayfasına uygula", "image": true, "expected": {"route": "task", "project": "blog", "session": "new"}}
+{"id": "c07", "text": "ekran görüntüsündeki tasarımı blog ana sayfasına uygula", "image": true, "expected": {"route": "task", "project": "blog", "session": "continue"}}
 {"id": "c08", "text": "what does this error mean", "clipboard": "TypeError: Cannot read properties of undefined (reading 'map')", "expected": {"route": "answer"}}
 {"id": "c09", "text": "panodaki kelime ne anlama geliyor", "clipboard": "idempotency", "expected": {"route": "answer"}}
-{"id": "e01", "text": "README'yi güncelle", "expected": {"route": "task", "project": "sandbox", "session": "new"}}
-{"id": "e02", "text": "testleri çalıştır", "expected": {"route": "task", "project": "sandbox", "session": "new"}}
+{"id": "e01", "text": "README'yi güncelle", "expected": {"route": "task", "project": "blog", "session": "continue"}}
+{"id": "e02", "text": "testleri çalıştır", "expected": {"route": "task", "project": "blog", "session": "continue"}}
 {"id": "e03", "text": "bir de başlığı büyüt", "expected": {"route": "task", "project": "blog", "session": "continue"}}
 {"id": "e04", "text": "commit at ve pushla blog değişikliklerini", "expected": {"route": "task", "project": "blog", "session": "continue"}}
 {"id": "e05", "text": "bugünün tarihi ne", "expected": {"route": "task", "project": "sandbox", "session": "new"}}
 {"id": "e06", "text": "PyTorch'ta model.eval() ne işe yarar", "expected": {"route": "answer"}}
-{"id": "e07", "text": "PyTorch notebook'unda model.eval() çağrısını unuttum mu kontrol et", "expected": {"route": "task", "project": "ml-notes", "session": "new"}}
+{"id": "e07", "text": "PyTorch notebook'unda model.eval() çağrısını unuttum mu kontrol et", "expected": {"route": "task", "project": "ml-notes", "session": "continue"}}
 {"id": "e08", "text": "Flutter'da setState nasıl çalışır", "expected": {"route": "answer"}}
 {"id": "e09", "text": "harcama uygulamasında setState yerine provider kullanmaya geç", "expected": {"route": "task", "project": "budget-app", "session": "new"}}
 {"id": "e10", "text": "Astro nedir", "expected": {"route": "answer"}}
 {"id": "e11", "text": "hatırlat bana yarın sabah doktora gideceğim", "expected": {"route": "task", "project": "sandbox", "session": "new"}}
-{"id": "e12", "text": "bu projede kaç tane test var say", "expected": {"route": "task", "project": "sandbox", "session": "new"}}
+{"id": "e12", "text": "bu projede kaç tane test var say", "expected": {"route": "task", "project": "blog", "session": "continue"}}
 {"id": "e13", "text": "son yaptığın değişikliği geri al", "expected": {"route": "task", "project": "blog", "session": "continue"}}
 {"id": "e14", "text": "tamam güzel olmuş şimdi mobilde de düzgün görünsün", "expected": {"route": "task", "project": "blog", "session": "continue"}}
 {"id": "e15", "text": "github actions ile otomatik test kur ses sunucusu için", "expected": {"route": "task", "project": "sayitship", "session": "new"}}
 {"id": "e16", "text": "how do I center a div", "expected": {"route": "answer"}}
 {"id": "e17", "text": "1 GB kaç MB", "expected": {"route": "answer"}}
 {"id": "e18", "text": "write a haiku about debugging into a file", "expected": {"route": "task", "project": "sandbox", "session": "new"}}
+{"id": "n01", "text": "Kubernetis pod ile deployment farkı ne", "expected": {"route": "answer"}}
+{"id": "n02", "text": "gitap ekşınsla otomatik test kur ses sunucusu için", "expected": {"route": "task", "project": "sayitship", "session": "new"}}
+{"id": "n03", "text": "pay torç notbukuna batç normalizasyon ekle", "expected": {"route": "task", "project": "ml-notes", "session": "continue"}}
+{"id": "n04", "text": "flatır uygulamasında fayırbeys kurallarını kontrol et", "expected": {"route": "task", "project": "budget-app", "session": "new"}}
+{"id": "n05", "text": "tayp skript ile cava skript arasındaki fark ne", "expected": {"route": "answer"}}
+{"id": "n06", "text": "astro sitesine teylvind kur sonra npm ran bild çalıştır", "expected": {"route": "task", "project": "blog", "session": "continue"}}
+{"id": "n07", "text": "post gre ile mongo di bi arasındaki temel fark ne", "expected": {"route": "answer"}}
+{"id": "n08", "text": "sey it şip projesinin readme dosyasına doker kompoz bölümü ekle", "expected": {"route": "task", "project": "sayitship", "session": "new"}}
+{"id": "n09", "text": "yeni oturumda baştan başla blogda arama özelliği ekle", "expected": {"route": "task", "project": "blog", "session": "new"}}
+{"id": "n10", "text": "panodaki ceysın dosyasını yeml formatına çevirip kaydet", "expected": {"route": "task", "project": "sandbox", "session": "new"}, "clipboard": "{\"name\": \"demo\", \"port\": 8080}"}

@@ -25,6 +25,31 @@ app = FastAPI(title="sayitship")
 HOOK_TOKEN = secrets.token_urlsafe(32)
 MAX_IMAGE_BYTES = 10 * 1024 * 1024
 IMAGE_TYPES = {b"\x89PNG": "png", b"\xff\xd8\xff": "jpg", b"GIF8": "gif", b"RIFF": "webp"}
+MAX_AUDIO_BYTES = 10 * 1024 * 1024
+
+
+def audio_mime(raw: bytes) -> str | None:
+    """Recognize the audio formats Gemini accepts. iPhone recordings are .m4a (MP4 container)."""
+    if raw[4:8] == b"ftyp":
+        return "audio/mp4"
+    if raw[:4] == b"RIFF" and raw[8:12] == b"WAVE":
+        return "audio/wav"
+    if raw[:3] == b"ID3" or raw[:2] in (b"\xff\xfb", b"\xff\xf3", b"\xff\xf2"):
+        return "audio/mp3"
+    if raw[:2] in (b"\xff\xf1", b"\xff\xf9"):
+        return "audio/aac"
+    if raw[:4] == b"OggS":
+        return "audio/ogg"
+    if raw[:4] == b"fLaC":
+        return "audio/flac"
+    return None
+
+
+def decode_b64(data: str, what: str) -> bytes:
+    try:
+        return base64.b64decode(data, validate=False)
+    except (binascii.Error, ValueError):
+        raise HTTPException(status_code=422, detail=f"{what} is not valid base64")
 
 
 @lru_cache
@@ -34,7 +59,10 @@ def get_settings() -> Settings:
 
 @lru_cache
 def get_store() -> Store:
-    return Store(get_settings().data_dir / "sayitship.db")
+    store = Store(get_settings().data_dir / "sayitship.db")
+    if store.mark_interrupted():
+        log.info("marked unfinished tasks from the previous run as interrupted")
+    return store
 
 
 def _bearer_ok(authorization: str, expected: str) -> bool:
@@ -56,7 +84,8 @@ def check_hook_token(authorization: str = Header(default="")) -> None:
 
 
 class TaskIn(BaseModel):
-    text: str = Field(min_length=1, max_length=4000)
+    text: str = Field(default="", max_length=4000)  # dictated text, or empty when audio is sent
+    audio: str = Field(default="", max_length=MAX_AUDIO_BYTES * 4 // 3 + 4)  # base64 recording
     clipboard: str = Field(default="", max_length=20000)
     url: str = Field(default="", max_length=2000)
     image: str = Field(default="", max_length=MAX_IMAGE_BYTES * 4 // 3 + 4)  # base64
@@ -64,10 +93,7 @@ class TaskIn(BaseModel):
 
 
 def save_image(data_b64: str, task_id: str, settings: Settings):
-    try:
-        raw = base64.b64decode(data_b64, validate=False)
-    except (binascii.Error, ValueError):
-        raise HTTPException(status_code=422, detail="image is not valid base64")
+    raw = decode_b64(data_b64, "image")
     ext = next((e for magic, e in IMAGE_TYPES.items() if raw.startswith(magic)), None)
     if ext is None:
         raise HTTPException(status_code=422, detail="image must be PNG, JPEG, GIF or WebP")
@@ -91,8 +117,17 @@ def create_task(
     store: Store = Depends(get_store),
 ) -> dict:
     text = task.text.strip()
-    if not text:
-        raise HTTPException(status_code=422, detail="text is empty")
+    audio = None
+    if task.audio.strip():
+        raw = decode_b64(task.audio, "audio")
+        mime = audio_mime(raw)
+        if mime is None:
+            raise HTTPException(status_code=422, detail="audio must be m4a, wav, mp3, aac, ogg or flac")
+        if not settings.gemini_api_key:
+            raise HTTPException(status_code=422, detail="audio needs GEMINI_API_KEY on the server")
+        audio = (raw, mime)
+    if not text and audio is None:
+        raise HTTPException(status_code=422, detail="send text or audio")
     if task.project and task.project not in settings.projects:
         raise HTTPException(status_code=400, detail="unknown project")
 
@@ -105,8 +140,11 @@ def create_task(
         url=task.url.strip(),
         image_path=image_path,
         project=task.project,
+        audio=audio,
     )
-    store.add_task(task_id, text, bool(req.clipboard), bool(req.url), image_path is not None)
+    store.add_task(
+        task_id, text or "(voice recording)", bool(req.clipboard), bool(req.url), image_path is not None
+    )
     background.add_task(process, req, settings, store, HOOK_TOKEN)
     return {"id": task_id, "status": "accepted"}
 

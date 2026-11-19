@@ -15,16 +15,19 @@ def sent(monkeypatch):
     return out
 
 
-def fake_decision(route="task", project="blog", session="new", answer=""):
-    return lambda *a, **k: Decision(route, project, session, answer, "r", "m1", 5)
+def fake_decision(route="task", project="blog", session="new", answer="", request="cleaned"):
+    return lambda *a, **k: Decision(
+        request=request, route=route, project=project, session=session, answer=answer,
+        reason="r", model="m1", latency_ms=5,
+    )
 
 
 def test_answer_route_notifies_without_running_claude(monkeypatch, settings, store, sent):
-    monkeypatch.setattr(runner.router, "route", fake_decision("answer", answer="404 = bulunamadı"))
+    monkeypatch.setattr(runner.router, "route", fake_decision("answer", answer="404 = bulunamadı", request="404 ne demek"))
     monkeypatch.setattr(runner, "run_claude", lambda *a: pytest.fail("claude must not run"))
     store.add_task("t1", "404 ne", False, False, False)
     runner.process(runner.Request("t1", "404 ne"), settings, store, "hook")
-    assert sent[-1][2:] == ("⚡ answer", "404 = bulunamadı")
+    assert sent[-1][2:] == ("⚡ 404 ne demek", "404 = bulunamadı")
     assert store.get_task("t1")["status"] == "done"
 
 
@@ -36,7 +39,8 @@ def test_task_runs_in_routed_project_and_saves_session(monkeypatch, settings, st
     runner.process(runner.Request("t1", "footer"), settings, store, "hook")
     assert seen == [("blog", None)]
     assert store.sessions()["blog"]["session_id"] == "sess-1"
-    assert sent[-1][2:] == ("🛠 blog · new", "Footer düzeltildi.")
+    assert sent[-1][2:] == ("🛠 blog · new", "Footer düzeltildi.\n\n🎙 cleaned")
+    assert store.get_task("t1")["understood"] == "cleaned"
     row = store.get_task("t1")
     assert (row["route"], row["project"], row["router_model"], row["claude_session_id"]) == ("task", "blog", "m1", "sess-1")
 
@@ -107,3 +111,22 @@ def test_parse_claude_output():
 def test_failed_notification_is_swallowed(monkeypatch):
     monkeypatch.setattr(notify.httpx, "post", lambda *a, **k: (_ for _ in ()).throw(httpx.ConnectError("x")))
     assert notify.send_notification("https://ntfy.example", "t", "title", "msg") is False
+
+
+def test_prompt_uses_understood_text_and_keeps_raw_transcript():
+    req = runner.Request("t", "Doctor yemeği ile konteyner farkı", understood="Docker image ile container farkı")
+    prompt = runner.build_prompt(req)
+    assert prompt.startswith("Docker image ile container farkı")
+    assert 'Raw transcript: "Doctor yemeği ile konteyner farkı"' in prompt
+    assert "Raw transcript" not in runner.build_prompt(runner.Request("t", "aynı", understood="aynı"))
+
+
+def test_audio_without_router_reports_instead_of_running(monkeypatch, settings, store, sent):
+    monkeypatch.setattr(runner.router, "route", lambda *a, **k: Decision(
+        request="", route="task", project="sandbox", session="new", answer="", reason="",
+        model="fallback", latency_ms=1))
+    monkeypatch.setattr(runner, "run_claude", lambda *a: pytest.fail("nothing to run"))
+    store.add_task("t5", "(voice recording)", False, False, False)
+    runner.process(runner.Request("t5", "", audio=(b"x", "audio/mp4")), settings, store, "hook")
+    assert sent[-1][2] == "⚠️ sayitship couldn't hear you"
+    assert store.get_task("t5")["status"] == "error"

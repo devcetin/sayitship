@@ -17,9 +17,9 @@ that sits in front of the tools you already use: iOS Shortcuts, Tailscale, Claud
  iPhone                                   your PC (reachable only over Tailscale)
 ┌─────────────────────┐   POST /task    ┌──────────────────────────────────────────────┐
 │ Action Button       │ ──────────────▶ │ FastAPI  → 202 Accepted right away            │
-│ Shortcut: dictate   │   Bearer token  │    │                                         │
+│ Shortcut: record    │   Bearer token  │    │                                         │
 │ (+ clipboard,       │                 │    ▼  background                             │
-│    screenshot, link)│                 │ Router (Gemini Flash-Lite, ~1.5–4 s)          │
+│    screenshot, link)│                 │ Router (Gemini Flash-Lite): transcribe+route  │
 └─────────────────────┘                 │    ├─ answer ─────────────▶ ntfy: ⚡ answer    │
           ▲                             │    └─ task: project + new/continue           │
           │ notification                │          ▼                                   │
@@ -81,7 +81,16 @@ To start the server automatically when you log in:
 | `POST` | `/approvals/{id}/allow\|deny?key=…` | one-time key | pressed from the notification |
 | `GET` | `/health` | none | liveness |
 
-`POST /task` body: `text` (required), `clipboard`, `url`, `image` (base64), `project`.
+`POST /task` body: `audio` (base64 recording) or `text` (dictation), plus optional `clipboard`,
+`url`, `image` (base64) and `project`.
+
+### Why audio instead of Apple dictation
+
+iOS dictation in Turkish turns English technical words into Turkish-sounding nonsense:
+"Bash ile pip list komutunu çalıştır" arrived as "Beş ile Bitlis komutanı çalıştır". So the
+Shortcut sends the recording, and the router transcribes it in the same Gemini call that routes
+it, with the user's project names and a developer vocabulary in the prompt. Text input still
+works; the router then tries to repair misheard terms from the text alone.
 
 ## Security
 
