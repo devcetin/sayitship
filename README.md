@@ -206,7 +206,6 @@ Your voice can run code on your computer, so the defaults are strict:
 - [x] Context: attach your clipboard, latest screenshot or a shared link
 - [x] Approvals: Yes/No buttons before risky commands
 - [x] Router eval: a public test set with accuracy, latency and cost
-- [ ] Demo video
 
 ## Development
 
